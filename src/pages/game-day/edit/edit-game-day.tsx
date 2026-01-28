@@ -28,6 +28,20 @@ const EditGameDay = () => {
   const onSubmit = async (data: CourtFormData) => {
     if(!gameDay.data) return false;
 
+    const newPlayerNames = new Set(data.players.map(p => p.value.name));
+    const removedPlayingPlayers = gameDay.data.playingTeams
+      .flat()
+      .filter(p => !newPlayerNames.has(p.name))
+      .map(p => p.name);
+    
+    if (removedPlayingPlayers.length > 0) {
+      alert(
+        `Não é possível remover os seguintes jogadores que estão na partida atual: ${removedPlayingPlayers.join(", ")}.\n` +
+        `Adicione um novo jogador e utilize a função de substituição na tela principal.`
+      );
+      return false;
+    }
+
     const players = data.players
       .map((player) => player.value)
       .map((player, index) => {
