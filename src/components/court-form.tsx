@@ -42,7 +42,9 @@ type Props = {
 
 const CourtForm = ({ onSubmit, submitButton, initialValues }: Props) => {
   const navigate = useNavigate();
-  const [createdPlayers, setCreatedPlayers] = useState<Player[]>([]);
+  const [createdPlayers, setCreatedPlayers] = useState<Player[]>(() => 
+    initialValues?.players?.map(p => p.value) ?? []
+  );
   const form = useForm<CourtFormData>({
     resolver: zodResolver(schema),
     defaultValues: initialValues,
