@@ -21,6 +21,7 @@ export type PlayerRating = {
 
 export type GameDay = {
   id: string;
+  groupId?: string;
   courtId: string;
   maxPoints: number;
   playersPerTeam: number;
@@ -35,4 +36,13 @@ export type GameDay = {
   matches: number;
   lastMatch: number;
   playingTeams: GameDayPlayer[][];
+};
+
+export type GameGroup = {
+  id: string;
+  name: string;
+  createdAt: string;
+  inviteCode: string;
+  inviteCodeExpiration: string;
+  players: GameDayPlayer[];
 };
