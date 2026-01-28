@@ -4,8 +4,8 @@ import { Controller, useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { z } from "zod";
 import { api } from "../api";
+import { useGroupPlayers } from "../hooks/use-group-players";
 import { createInitialRating } from "../lib/elo";
-import { Player } from "../types";
 import BackButton from "./back-button";
 import Input from "./input";
 import Select from "./select";
@@ -32,18 +32,19 @@ const schema = z.object({
   ),
 });
 
-export type CourtFormData = z.infer<typeof schema>;
+export type CourtFormGroupData = z.infer<typeof schema>;
 
 type Props = {
-  onSubmit: (data: CourtFormData) => Promise<boolean>;
+  groupId: string;
+  onSubmit: (data: CourtFormGroupData) => Promise<boolean>;
   submitButton: (isSubmitting: boolean) => React.ReactNode;
-  initialValues?: CourtFormData;
+  initialValues?: CourtFormGroupData;
 };
 
-const CourtForm = ({ onSubmit, submitButton, initialValues }: Props) => {
+const CourtFormGroup = ({ groupId, onSubmit, submitButton, initialValues }: Props) => {
+  const { data: groupPlayers = [], mutate: refreshPlayers } = useGroupPlayers(groupId);
   const navigate = useNavigate();
-  const [createdPlayers, setCreatedPlayers] = useState<Player[]>([]);
-  const form = useForm<CourtFormData>({
+  const form = useForm<CourtFormGroupData>({
     resolver: zodResolver(schema),
     defaultValues: initialValues,
   });
@@ -86,6 +87,7 @@ const CourtForm = ({ onSubmit, submitButton, initialValues }: Props) => {
           type: "manual",
           message: "Erro ao criar jogo",
         });
+        return;
       }
 
       navigate("/pelada");
@@ -95,13 +97,13 @@ const CourtForm = ({ onSubmit, submitButton, initialValues }: Props) => {
   });
 
   const [isCreatingPlayer, setIsCreatingPlayer] = useState(false);
-  // Para peladas avulsas, começamos com lista vazia e só permitimos criar jogadores novos
-  const options = createdPlayers
-    .map((player) => ({
-      value: player,
-      label: player.name,
-    }))
-    .sort((a, b) => a.label.localeCompare(b.label));
+  const options =
+    groupPlayers
+      ?.map((player) => ({
+        value: player,
+        label: player.name,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label)) ?? [];
   const selectedPlayers = form.watch("players");
 
   const onCreateOption = async (name: string) => {
@@ -109,7 +111,7 @@ const CourtForm = ({ onSubmit, submitButton, initialValues }: Props) => {
       form.clearErrors("players");
       setIsCreatingPlayer(true);
       const newPlayer = { name, ...createInitialRating() };
-      const ok = await api.putPlayer(newPlayer);
+      const ok = await api.addGroupPlayer(groupId, newPlayer);
       if (!ok) {
         form.setError("players", {
           type: "manual",
@@ -117,8 +119,7 @@ const CourtForm = ({ onSubmit, submitButton, initialValues }: Props) => {
         });
         return;
       }
-      // Adiciona o jogador criado à lista local
-      setCreatedPlayers((prev) => [...prev, newPlayer]);
+      await refreshPlayers();
       form.setValue("players", [
         ...(selectedPlayers ?? []),
         { value: newPlayer, label: newPlayer.name },
@@ -132,7 +133,7 @@ const CourtForm = ({ onSubmit, submitButton, initialValues }: Props) => {
 
   return (
     <form className="tw-flex tw-flex-col tw-gap-5" onSubmit={handleSubmit}>
-      <BackButton />
+      <BackButton to={`/grupos/${groupId}`} />
       <div className="tw-flex tw-flex-col sm:tw-flex-row tw-gap-2">
         <div className="tw-flex-1 tw-flex tw-flex-col">
           <label htmlFor="playersPerTeam">Jogadores por time:</label>
@@ -231,4 +232,4 @@ const CourtForm = ({ onSubmit, submitButton, initialValues }: Props) => {
   );
 };
 
-export default CourtForm;
+export default CourtFormGroup;

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useGameDays } from '../../hooks/use-game-days'
+import { useGroupGameDays } from '../../hooks/use-group-game-days'
 import { VscLoading } from 'react-icons/vsc';
 import { FaRedo } from 'react-icons/fa';
-import { useParams, useSearchParams, useNavigate } from 'react-router';
+import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router';
 import PlayersTable from '../../components/players-table';
 import BackButton from '../../components/back-button';
 import Button from '../../components/button';
@@ -10,8 +11,19 @@ import { api } from '../../api';
 
 
 const HistoryMatch = () => {
-  const gameDays = useGameDays();
-  const params = useParams();
+  // Support both legacy routes (/historico/:id) and group routes (/grupos/:id/historico/:gameDayId)
+  const params = useParams<{ id?: string; gameDayId?: string }>();
+  const location = useLocation();
+  const isGroupRoute = location.pathname.includes('/grupos/');
+  
+  // Extract groupId and gameDayId based on route
+  const groupId = isGroupRoute ? params.id : null;
+  const gameDayId = isGroupRoute ? params.gameDayId : params.id;
+  
+  const legacyGameDays = useGameDays();
+  const groupGameDays = useGroupGameDays(groupId ?? null);
+  
+  const gameDays = isGroupRoute ? groupGameDays : legacyGameDays;
   const [searchParams] = useSearchParams()
   const navigate = useNavigate();
   const [isRestarting, setIsRestarting] = useState(false);
@@ -22,7 +34,7 @@ const HistoryMatch = () => {
     </div>
   }
 
-  const gameDay = gameDays.data?.find(gameDay => gameDay.id === params.id);
+  const gameDay = gameDays.data?.find(gd => gd.id === gameDayId);
 
   if(!gameDay) {
     return <div
@@ -51,9 +63,16 @@ const HistoryMatch = () => {
     }
   };
 
+  // Determine back navigation path
+  const getBackPath = () => {
+    if (searchParams.get('origin') === 'game-day') return '/';
+    if (isGroupRoute && groupId) return `/grupos/${groupId}/historico`;
+    return '/historico';
+  };
+
   return (
     <>
-      <BackButton to={searchParams.get('origin') === 'game-day' ? '/' : '/historico'} />
+      <BackButton to={getBackPath()} />
       <PlayersTable
         gameDay={gameDay}
         legend={false}

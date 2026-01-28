@@ -3,7 +3,7 @@ import { buttonClasses } from "../../components/button";
 import Input from "../../components/input";
 import Button from "../../components/button";
 import { FaClock, FaPlus } from "react-icons/fa";
-import { FaRightToBracket } from "react-icons/fa6";
+import { FaRightToBracket, FaUsers } from "react-icons/fa6";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -48,11 +48,20 @@ const Home = () => {
 
   return (
     <div className="tw-flex-1 tw-flex tw-flex-col tw-gap-5 tw-justify-center tw-self-center tw-max-w-md tw-w-full tw-px-4">
-      <div className="tw-flex tw-flex-col tw-gap-2">
-        <Link to="/criar-pelada" className={`${buttonClasses} tw-flex-1`}>
-          <FaPlus />
-          Criar nova pelada
-        </Link>
+      <Link to="/grupos" className={`${buttonClasses} tw-bg-emerald-400`}>
+        <FaUsers />
+        Meus Grupos de Pelada
+      </Link>
+      <div className="tw-border-t tw-border-gray-200 tw-pt-5">
+        <p className="tw-text-gray-500 tw-text-sm tw-text-center tw-mb-3">
+          Ou crie uma pelada avulsa:
+        </p>
+        <div className="tw-flex tw-flex-col tw-gap-2">
+          <Link to="/criar-pelada" className={`${buttonClasses} tw-flex-1`}>
+            <FaPlus />
+            Criar nova pelada
+          </Link>
+        </div>
       </div>
       <form
         className="tw-flex tw-flex-col tw-gap-3"
